@@ -17,18 +17,20 @@ docker compose up -d
 | Service         | Port(s)     | Rôle |
 |-----------------|-------------|------|
 | **Traefik**     | 80, 443     | Reverse proxy avec TLS (Let’s Encrypt). Expose les services Prism en HTTPS. |
-| **Transmission**| 9091, 51413 | Client torrent. Dossier de watch : `./watch`. Téléchargements : `./downloads`. |
-| **FileBrowser** | 80 (interne) | Interface web pour parcourir les fichiers (racine : `./`). |
+| **Transmission**| 9091, 51413 | Client torrent. Dossier de watch : `../data/watch`. Téléchargements : `../data/downloads`. |
+| **FileBrowser** | 80 (interne) | Interface web pour parcourir les fichiers (racine : `../data`). |
 
 Les URLs sont définies via les labels Traefik (ex. `transmission.flix.leodubosclard.com`, `files.flix.leodubosclard.com`).
 
 ## Répertoires
 
-- `config/transmission` — configuration Transmission
-- `config/filebrowser` — base FileBrowser
-- `letsencrypt` — certificats ACME (Traefik)
-- `downloads` — téléchargements (en cours et terminés)
-- `watch` — déposer des fichiers `.torrent` pour Transmission
+Les données sont dans **[../data/](../data/)** (voir README racine) :
+
+- `../data/config/transmission` — configuration Transmission
+- `../data/config/filebrowser` — base FileBrowser
+- `../data/letsencrypt` — certificats ACME (Traefik)
+- `../data/downloads` — téléchargements (en cours et terminés)
+- `../data/watch` — déposer des fichiers `.torrent` pour Transmission
 
 ## Réseaux
 

@@ -22,10 +22,10 @@ Ou à la racine du dépôt : `docker compose up -d` (inclut Core + Prism).
 | Service   | Port  | Rôle |
 |----------|-------|------|
 | **Jackett** | 9117 | Indexeur : recherche de torrents (trackers publics/privés) pour Radarr et Sonarr |
-| **Radarr**  | 7878 | Orchestrateur films : recherche via Jackett, envoi des torrents au client, déplacement des fichiers terminés vers `../movies` |
-| **Sonarr**  | 8989 | Orchestrateur séries : idem pour les séries, sortie dans `../tv` |
+| **Radarr**  | 7878 | Orchestrateur films : recherche via Jackett, envoi des torrents au client, déplacement des fichiers terminés vers `../data/movies` |
+| **Sonarr**  | 8989 | Orchestrateur séries : idem pour les séries, sortie dans `../data/tv` |
 | **Seerr**   | 5055 | Gestion des demandes : demandes de films/séries envoyées aux orchestrateurs |
-| **Plex**    | 32400 | Serveur média : sert films et séries depuis `../movies` et `../tv` |
+| **Plex**    | 32400 | Serveur média : sert films et séries depuis `../data/movies` et `../data/tv` |
 
 Jellyfin est présent en commentaire dans le compose comme alternative à Plex.
 
@@ -34,17 +34,17 @@ Jellyfin est présent en commentaire dans le compose comme alternative à Plex.
 1. Dans **Seerr** (ou directement dans Radarr/Sonarr) : ajouter un film ou une série.
 2. Radarr/Sonarr interroge **Jackett** pour trouver des torrents.
 3. Radarr/Sonarr envoie le torrent au client (ex. Transmission dans Core) ou tu déposes un `.torrent` dans le dossier watch du client.
-4. Le client télécharge dans `../downloads` ; Radarr/Sonarr déplace les fichiers finis vers `../movies` ou `../tv`.
+4. Le client télécharge dans `../data/downloads` ; Radarr/Sonarr déplace les fichiers finis vers `../data/movies` ou `../data/tv`.
 5. **Plex** indexe ces dossiers et tu peux lire le contenu sur tes appareils.
 
 ## Répertoires
 
-Les chemins sont relatifs au parent du dossier `prism/` (racine du dépôt si tu lances depuis la racine) :
+Les données sont dans **[../data/](../data/)** (voir README racine) :
 
-- `../config/jackett`, `../config/radarr`, `../config/sonarr`, `../config/overseerr`, `../config/plex` — config par service
-- `../downloads` — téléchargements (partagés avec le client torrent)
-- `../movies` — films prêts à lire (alimenté par Radarr, servi par Plex)
-- `../tv` — séries (alimenté par Sonarr, servi par Plex)
+- `../data/config/jackett`, `../data/config/radarr`, `../data/config/sonarr`, `../data/config/seerr`, `../data/config/plex` — config par service
+- `../data/downloads` — téléchargements (partagés avec le client torrent)
+- `../data/movies` — films prêts à lire (alimenté par Radarr, servi par Plex)
+- `../data/tv` — séries (alimenté par Sonarr, servi par Plex)
 
 ## Réseau
 

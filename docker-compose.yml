@@ -1,3 +1,4 @@
 include:
   - core/docker-compose.yml
   - prism/docker-compose.yml
+  - pulse/docker-compose.yml

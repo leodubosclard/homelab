@@ -1,0 +1,123 @@
+#
+# Pulse stack
+# Gaming stack to download and stream games
+#
+
+services:
+
+  #
+  # Games orchestrator (tracker and downloader)
+  #
+  questarr:
+    image: ghcr.io/doezer/questarr:latest
+    container_name: questarr
+    restart: unless-stopped
+    platform: linux/amd64
+    networks:
+      - infra-network
+    environment:
+      - PUID=1000
+      - PGID=1001
+      - TZ=Europe/Paris
+    volumes:
+      - ../data/config/questarr:/config
+      - ../data/downloads:/downloads
+      - ../data/games:/games
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.questarr.rule=Host(`questarr.example.com`)"
+      - "traefik.http.routers.questarr.entrypoints=websecure"
+      - "traefik.http.routers.questarr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.questarr.loadbalancer.server.port=5000"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  #
+  # ROM & Game library manager
+  #
+  romm:
+    image: rommapp/romm:latest
+    container_name: romm
+    restart: unless-stopped
+    networks:
+      - infra-network
+    environment:
+      - PUID=1000
+      - PGID=1001
+      - DB_HOST=romm-db
+      - DB_NAME=romm
+      - DB_USER=admin
+      - DB_PASSWD=admin
+      - ROMM_AUTH_SECRET=admin
+    volumes:
+      - ../data/games:/romm/library
+      - ../data/config/romm/resources:/romm/resources
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.romm.rule=Host(`romm.example.com`)"
+      - "traefik.http.routers.romm.entrypoints=websecure"
+      - "traefik.http.routers.romm.tls.certresolver=letsencrypt"
+      - "traefik.http.services.romm.loadbalancer.server.port=8080"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  #
+  # Game library database
+  #
+  romm-db:
+    image: mariadb:latest
+    container_name: romm-db
+    restart: unless-stopped
+    networks:
+      - infra-network
+    environment:
+      - MYSQL_ROOT_PASSWORD=admin
+      - MYSQL_DATABASE=romm
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=admin
+    volumes:
+      - ../data/config/romm-db:/var/lib/mysql
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  #
+  # Streaming server
+  #
+  wolf:
+    image: ghcr.io/games-on-whales/wolf:stable
+    container_name: wolf
+    restart: unless-stopped
+    network_mode: host
+    privileged: true
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../data/config/wolf:/etc/wolf
+      - ../data/games:/games
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu, display, video, compute]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  infra-network:
+    external: true
