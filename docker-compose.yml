@@ -1,0 +1,3 @@
+include:
+  - core/docker-compose.yml
+  - prism/docker-compose.yml

@@ -1,0 +1,181 @@
+#
+# Prism stack
+# Media stack to download and watch movies and series
+#
+
+services:
+
+  #
+  # Indexer
+  #
+  jackett:
+    image: lscr.io/linuxserver/jackett:latest
+    container_name: jackett
+    restart: unless-stopped
+    networks:
+      - prism-network
+    environment:
+      - PUID=1000
+      - PGID=1001
+      - TZ=Europe/Paris
+    volumes:
+      - ../data/config/jackett:/config
+      - ../data/downloads:/downloads
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jackett.rule=Host(`jackett.example.com`)"
+      - "traefik.http.routers.jackett.entrypoints=websecure"
+      - "traefik.http.routers.jackett.tls.certresolver=letsencrypt"
+      - "traefik.http.services.jackett.loadbalancer.server.port=9117"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  #
+  # Movie orchestrator (tracker and downloader)
+  #
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    networks:
+      - prism-network
+    environment:
+      - PUID=1000
+      - PGID=1001
+      - TZ=Europe/Paris
+    volumes:
+      - ../data/config/radarr:/config
+      - ../data/movies:/movies
+      - ../data/downloads:/downloads
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.example.com`)"
+      - "traefik.http.routers.radarr.entrypoints=websecure"
+      - "traefik.http.routers.radarr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.radarr.loadbalancer.server.port=7878"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  #
+  # Series orchestrator (tracker and downloader)
+  #
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    networks:
+      - prism-network
+    environment:
+      - PUID=1000
+      - PGID=1001
+      - TZ=Europe/Paris
+    volumes:
+      - ../data/config/sonarr:/config
+      - ../data/downloads:/downloads
+      - ../data/tv:/tv
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.example.com`)"
+      - "traefik.http.routers.sonarr.entrypoints=websecure"
+      - "traefik.http.routers.sonarr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  #
+  # Request manager (request movies and series and send them to the orchestrators)
+  #
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    init: true
+    container_name: seerr
+    restart: unless-stopped
+    networks:
+      - prism-network
+    environment:
+      - PUID=1000
+      - PGID=1001
+      - TZ=Europe/Paris
+    volumes:
+      - ../data/config/seerr:/config
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.seerr.rule=Host(`requests.example.com`)"
+      - "traefik.http.routers.seerr.entrypoints=websecure"
+      - "traefik.http.routers.seerr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.seerr.loadbalancer.server.port=5055"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  #
+  # Media server
+  #
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    restart: unless-stopped
+    networks:
+      - prism-network
+    environment:
+      - PUID=1000
+      - PGID=1001
+      - TZ=Europe/Paris
+      - VERSION=docker
+      - PLEX_CLAIM=claim-xyz
+      - PLEX_PUBLISHED_SERVER_URL=https://plex.example.com
+    volumes:
+      - ../data/config/plex:/config
+      - ../data/movies:/movies
+      - ../data/tv:/tv
+    ports:
+      - "32400:32400"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.plex.rule=Host(`plex.example.com`)"
+      - "traefik.http.routers.plex.entrypoints=websecure"
+      - "traefik.http.routers.plex.tls.certresolver=letsencrypt"
+      - "traefik.http.services.plex.loadbalancer.server.port=32400"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  #
+  # Media server (alternative to Plex)
+  #
+  # jellyfin:
+  #   image: jellyfin/jellyfin:latest
+  #   container_name: jellyfin
+  #   restart: unless-stopped
+  #   networks:
+  #     - prism-network
+  #   environment:
+  #     - TZ=Europe/Paris
+  #   volumes:
+  #     - ../data/config/jellyfin:/config
+  #     - ../data/movies:/movies
+  #     - ../data/tv:/tv
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.example.com`)"
+  #     - "traefik.http.routers.jellyfin.entrypoints=websecure"
+  #     - "traefik.http.routers.jellyfin.tls.certresolver=letsencrypt"
+  #     - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
+
+networks:
+  prism-network:
+    name: prism-network
+    driver: bridge

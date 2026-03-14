@@ -1,0 +1,106 @@
+#
+# Core services
+#
+
+services:
+
+  #
+  # Reverse proxy
+  #
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@example.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "../data/letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - infra-network
+      - prism-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  #
+  # Torrent client
+  #
+  transmission:
+    image: lscr.io/linuxserver/transmission:latest
+    container_name: transmission
+    restart: unless-stopped
+    networks:
+      - infra-network
+    environment:
+      - PUID=1000
+      - PGID=1001
+      - TZ=Europe/Paris
+      - USER=admin
+      - PASS=admin
+    volumes:
+      - ../data/config/transmission:/config
+      - ../data/downloads:/downloads
+      - ../data/watch:/watch
+    ports:
+      - "51413:51413"
+      - "51413:51413/udp"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.transmission.rule=Host(`transmission.example.com`)"
+      - "traefik.http.routers.transmission.entrypoints=websecure"
+      - "traefik.http.routers.transmission.tls.certresolver=letsencrypt"
+      - "traefik.http.services.transmission.loadbalancer.server.port=9091"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  #
+  # File browser
+  #
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    container_name: filebrowser
+    restart: unless-stopped
+    networks:
+      - infra-network
+    volumes:
+      - ../data:/srv
+      - ../data/config/filebrowser:/database
+    environment:
+      - PUID=1000
+      - PGID=1001
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.files.rule=Host(`files.example.com`)"
+      - "traefik.http.routers.files.entrypoints=websecure"
+      - "traefik.http.routers.files.tls.certresolver=letsencrypt"
+      - "traefik.http.services.files.loadbalancer.server.port=80"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  infra-network:
+    name: infra-network
+    driver: bridge
+  prism-network:
+    name: prism-network
+    driver: bridge
