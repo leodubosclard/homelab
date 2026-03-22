@@ -5,7 +5,8 @@ Stack média : téléchargement et visionnage de films et séries via torrents, 
 ## Prérequis
 
 - [Docker](https://docs.docker.com/get-docker/) et Docker Compose
-- Un client torrent accessible (par ex. **Transmission** dans [Core](../core/)) ; pour que Radarr/Sonarr l’utilisent, il doit être sur le même réseau (ex. **prism-network**).
+- Les réseaux **`infra-network`** et **`prism-network`** doivent exister avant ce compose (ils sont déclarés `external`). **Lance d’abord** [Core](../core/) : `core/docker-compose.yml` les crée. Sinon la communication entre services ne fonctionnera pas ; tu peux aussi les créer à la main (voir le [README racine](../README.md#ordre-de-démarrage-et-réseaux-docker)).
+- Un client torrent accessible (par ex. **Transmission** dans Core) ; pour que Radarr/Sonarr l’utilisent, il doit être sur le même réseau (ex. **prism-network**).
 
 ## Démarrer
 
@@ -48,7 +49,7 @@ Les données sont dans **[../data/](../data/)** (voir README racine) :
 
 ## Réseau
 
-Tous les services tournent sur le bridge **prism-network**. Traefik (dans Core) est attaché à ce réseau pour exposer les interfaces en HTTPS.
+Tous les services tournent sur le bridge **prism-network**. Ce compose attend aussi **infra-network** et **prism-network** en `external` : ils sont **créés par** [Core](../core/) (`docker compose up` dans `core/`). Sans cela, le démarrage échoue ou la communication entre services ne fonctionne pas (alternative : création manuelle des réseaux, voir le [README racine](../README.md#ordre-de-démarrage-et-réseaux-docker)). **Traefik** (Core) est attaché à **prism-network** pour exposer les interfaces en HTTPS.
 
 ## Sécurité
 

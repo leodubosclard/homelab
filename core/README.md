@@ -8,6 +8,8 @@ Stack d’infrastructure partagée : reverse proxy (Traefik), client torrent (Tr
 
 ## Démarrer
 
+Ce fichier compose **crée les réseaux Docker** `infra-network` et `prism-network`. Lance-le **en premier** si tu déploies les autres stacks (Prism, Pulse) séparément : sans ces réseaux, la communication entre conteneurs ne fonctionne pas (tu peux aussi les [créer manuellement](../README.md#ordre-de-démarrage-et-réseaux-docker) avec `docker network create`).
+
 ```bash
 docker compose up -d
 ```
@@ -34,8 +36,10 @@ Les données sont dans **[../data/](../data/)** (voir README racine) :
 
 ## Réseaux
 
-- **infra-network** : Traefik, Transmission, FileBrowser
-- **prism-network** : Traefik uniquement (pour router le trafic vers les services Prism)
+Les blocs `networks` en bas de ce fichier **déclarent et créent** `infra-network` et `prism-network`. Les autres stacks du dépôt s’y connectent (réseaux souvent marqués `external` dans leur compose) : lancer **ce** compose avant Prism/Pulse évite les erreurs au démarrage.
+
+- **infra-network** : Traefik, Transmission, FileBrowser, etc.
+- **prism-network** : Traefik (et les services Prism une fois leur stack démarrée ; Traefik route le trafic vers Prism)
 
 Pour que Radarr/Sonarr (Prism) envoient des torrents à ce Transmission, ajouter **prism-network** au service `transmission` dans ce `docker-compose.yml`.
 

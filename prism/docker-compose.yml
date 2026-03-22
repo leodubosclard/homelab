@@ -34,6 +34,21 @@ services:
         max-file: "3"
 
   #
+  # FlareSovlverr for Indexers
+  #
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    restart: unless-stopped
+    networks:
+      - prism-network
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - PUID=1000
+      - PGID=1001
+      - TIMEZONE=Europe/Paris
+
+  #
   # Movie orchestrator (tracker and downloader)
   #
   radarr:
@@ -135,7 +150,7 @@ services:
       - PGID=1001
       - TZ=Europe/Paris
     volumes:
-      - ../data/config/seerr:/config
+      - ../data/config/seerr:/app/config
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.seerr.rule=Host(`requests.example.com`)"
@@ -176,6 +191,33 @@ services:
       - "traefik.http.routers.plex.entrypoints=websecure"
       - "traefik.http.routers.plex.tls.certresolver=letsencrypt"
       - "traefik.http.services.plex.loadbalancer.server.port=32400"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  #
+  # Plex monitoring
+  #
+  tautulli:
+    image: lscr.io/linuxserver/tautulli:latest
+    container_name: tautulli
+    restart: unless-stopped
+    networks:
+      - prism-network
+    environment:
+      - PUID=1000
+      - PGID=1001
+      - TZ=Europe/Paris
+    volumes:
+      - ../data/config/tautulli:/config
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tautulli.rule=Host(`stats.example.com`)"
+      - "traefik.http.routers.tautulli.entrypoints=websecure"
+      - "traefik.http.routers.tautulli.tls.certresolver=letsencrypt"
+      - "traefik.http.services.tautulli.loadbalancer.server.port=8181"
     logging:
       driver: json-file
       options:

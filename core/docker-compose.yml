@@ -37,6 +37,23 @@ services:
         max-file: "3"
 
   #
+  # VPN access
+  #
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: tailscale
+    hostname: homelab
+    restart: unless-stopped
+    networks:
+      - infra-network
+    volumes:
+      - ../data/config/tailscale:/config
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+
+  #
   # Torrent client
   #
   transmission:
@@ -59,7 +76,7 @@ services:
       - "51413:51413"
       - "51413:51413/udp"
     labels:
-      - "traefik.enable=true"
+      - "traefik.enable=false"
       - "traefik.http.routers.transmission.rule=Host(`transmission.example.com`)"
       - "traefik.http.routers.transmission.entrypoints=websecure"
       - "traefik.http.routers.transmission.tls.certresolver=letsencrypt"
@@ -91,6 +108,32 @@ services:
       - "traefik.http.routers.files.entrypoints=websecure"
       - "traefik.http.routers.files.tls.certresolver=letsencrypt"
       - "traefik.http.services.files.loadbalancer.server.port=80"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  #
+  # Server supervisor
+  #
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    restart: unless-stopped
+    networks:
+      - infra-network
+    volumes:
+      - ../data/config/homepage:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - HOMEPAGE_ALLOWED_HOSTS=super.example.com
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homepage.rule=Host(`super.example.com`)"
+      - "traefik.http.routers.homepage.entrypoints=websecure"
+      - "traefik.http.routers.homepage.tls.certresolver=letsencrypt"
+      - "traefik.http.services.homepage.loadbalancer.server.port=80"
     logging:
       driver: json-file
       options:

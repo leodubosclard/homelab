@@ -18,7 +18,7 @@ Depuis ce dossier :
 docker compose up -d
 ```
 
-*(Le réseau **infra-network** doit exister — le créer en lançant une fois la stack Core.)*
+*(Les réseaux Docker partagés avec le reste du homelab sont créés par **[Core](../core/)** : lance `core/docker-compose.yml` en premier. Sinon **infra-network** n’existe pas, la communication avec Transmission / les autres services ne fonctionne pas ; tu peux aussi créer le réseau à la main — voir le [README racine](../README.md#ordre-de-démarrage-et-réseaux-docker).)*
 
 ## Services
 

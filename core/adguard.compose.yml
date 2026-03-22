@@ -1,0 +1,24 @@
+services:
+
+  #
+  # Adguard
+  #
+  adguard:
+    image: adguard/adguardhome
+    container_name: adguard
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ../data/config/adguard/workdir:/opt/adguardhome/work
+      - ../data/config/adguard/confdir:/opt/adguardhome/conf
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.adguard.rule=Host(`adguard.example.com`)"
+      - "traefik.http.routers.adguard.entrypoints=websecure"
+      - "traefik.http.routers.adguard.tls.certresolver=letsencrypt"
+      - "traefik.http.services.adguard.loadbalancer.server.port=8080"
+
+networks:
+  infra-network:
+    name: infra-network
+    external: true
